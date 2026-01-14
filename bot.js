@@ -1,17 +1,17 @@
+
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
 const http = require("http");
 
-// ================= TOKEN BOT =================
-const TOKEN = "8595477726:AAFVWI0G1ytx56K5pJrUs801dex5_SOlYz8"; // <-- DÁN TOKEN BOT VÀO ĐÂY
+// ================= TOKEN =================
+const TOKEN = "8595477726:AAFVWI0G1ytx56K5pJrUs801dex5_SOlYz8";
 
 // ================= CONFIG =================
 const PORT = process.env.PORT || 3000;
 const USER_FILE = "./user.json";
 
-// ================= KEEP ALIVE (RENDER) =================
+// ================= KEEP ALIVE =================
 http.createServer((req, res) => {
-    res.writeHead(200);
     res.end("BOT VIP 3.0 IS RUNNING");
 }).listen(PORT);
 
@@ -28,6 +28,10 @@ function loadUsers() {
 
 function saveUsers(users) {
     fs.writeFileSync(USER_FILE, JSON.stringify(users, null, 2));
+}
+
+function getUser(userId) {
+    return loadUsers().find(u => u.ID_User === userId);
 }
 
 function getTime() {
@@ -55,19 +59,16 @@ bot.onText(/\/start/, (msg) => {
         saveUsers(users);
     }
 
-    const text = `
-🎉 *CHÀO MỪNG ĐẾN VỚI BOT VIP 3.0* 🎉
+    bot.sendMessage(chatId, `
+🎉 *CHÀO MỪNG ĐẾN VỚI BOT VIP 3.0*
 
-📌 *THÔNG TIN CỦA BẠN*
 👤 Tên: ${user.Ten_User}
 🆔 ID: ${user.ID_User}
 💰 Số Dư: ${user.So_Du}
 🔐 Kích Hoạt: ${user.Kich_Hoat}
 
-🍀 *CHÚC BẠN NHIỀU MAY MẮN* 🍀
-`;
-
-    bot.sendMessage(chatId, text, {
+🍀 *Chúc bạn nhiều may mắn*
+`, {
         parse_mode: "Markdown",
         reply_markup: {
             keyboard: [
@@ -80,35 +81,100 @@ bot.onText(/\/start/, (msg) => {
     });
 });
 
-// ================= BUTTON EVENTS =================
+// ================= MESSAGE HANDLER =================
 bot.on("message", (msg) => {
     const text = msg.text;
     const chatId = msg.chat.id;
-    if (!text) return;
+    const userId = msg.from.id;
+    const user = getUser(userId);
+    if (!text || !user) return;
 
+    // ===== CHẠY TOOL =====
     if (text === "🚀 Chạy Tool") {
-        bot.sendMessage(chatId, "⚙️ Tool đang được phát triển...");
+        if (user.Kich_Hoat !== "VIP") {
+            return bot.sendMessage(chatId, `
+🔐 *TÀI KHOẢN CHƯA CÓ KEY VIP*
+
+Vui lòng mua key hoặc nhập key để tiếp tục.
+`, { parse_mode: "Markdown" });
+        }
+
+        return bot.sendMessage(chatId, "🎮 *CHỌN TOOL*", {
+            parse_mode: "Markdown",
+            reply_markup: {
+                keyboard: [
+                    ["🎰 Baccarat", "☀️ Sunwin"],
+                    ["🎲 Lc97", "🔥 Hitclub"],
+                    ["🎯 B52", "🎮 789Club"],
+                    ["⬅️ Quay Lại"]
+                ],
+                resize_keyboard: true
+            }
+        });
     }
 
-    if (text === "💰 Nạp Tiền") {
-        bot.sendMessage(chatId, "💳 Vui lòng liên hệ Admin để nạp tiền.");
+    // ===== BACCARAT =====
+    if (text === "🎰 Baccarat") {
+        let rows = [];
+        for (let i = 1; i <= 16; i += 4) {
+            rows.push([
+                `C${i.toString().padStart(2, "0")}`,
+                `C${(i+1).toString().padStart(2, "0")}`,
+                `C${(i+2).toString().padStart(2, "0")}`,
+                `C${(i+3).toString().padStart(2, "0")}`
+            ]);
+        }
+        rows.push(["⬅️ Quay Lại"]);
+
+        return bot.sendMessage(chatId, "🎰 *BACCARAT*", {
+            parse_mode: "Markdown",
+            reply_markup: { keyboard: rows, resize_keyboard: true }
+        });
     }
 
-    if (text === "🔑 Mua Key") {
-        bot.sendMessage(chatId, "🔐 Liên hệ Admin để mua key VIP.");
+    // ===== SUNWIN =====
+    if (text === "☀️ Sunwin") {
+        return bot.sendMessage(chatId, "☀️ *SUNWIN*", {
+            parse_mode: "Markdown",
+            reply_markup: {
+                keyboard: [
+                    ["Tài Xỉu", "Sicbo"],
+                    ["Volta"],
+                    ["⬅️ Quay Lại"]
+                ],
+                resize_keyboard: true
+            }
+        });
     }
 
-    if (text === "✅ Kích Hoạt") {
-        bot.sendMessage(chatId, "📥 Vui lòng gửi key để kích hoạt.");
+    // ===== LC97 =====
+    if (text === "🎲 Lc97") {
+        return bot.sendMessage(chatId, "🎲 *LC97*", {
+            parse_mode: "Markdown",
+            reply_markup: {
+                keyboard: [
+                    ["Tài Xỉu MD5"],
+                    ["⬅️ Quay Lại"]
+                ],
+                resize_keyboard: true
+            }
+        });
     }
 
-    if (text === "📜 Lịch Sử") {
-        bot.sendMessage(chatId, "📜 Hiện chưa có lịch sử giao dịch.");
-    }
-
-    if (text === "📞 Liên Hệ Admin") {
-        bot.sendMessage(chatId, "📞 Admin: @your_admin");
+    // ===== QUAY LẠI =====
+    if (text === "⬅️ Quay Lại") {
+        return bot.sendMessage(chatId, "🏠 *MENU CHÍNH*", {
+            parse_mode: "Markdown",
+            reply_markup: {
+                keyboard: [
+                    ["🚀 Chạy Tool", "💰 Nạp Tiền"],
+                    ["🔑 Mua Key", "✅ Kích Hoạt"],
+                    ["📜 Lịch Sử", "📞 Liên Hệ Admin"]
+                ],
+                resize_keyboard: true
+            }
+        });
     }
 });
 
-console.log("🚀 BOT VIP 3.0 ĐÃ KHỞI ĐỘNG");
+console.log("🚀 BOT VIP 3.0 ĐÃ CHẠY");console.log("🚀 BOT VIP 3.0 ĐÃ KHỞI ĐỘNG");
